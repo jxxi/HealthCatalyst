@@ -1,72 +1,146 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using HealthCatalyst.Model;
+using Microsoft.Extensions.Logging;
 
 namespace HealthCatalyst.Controllers
 {
     [Route("api/[controller]")]
-    public class PeopleController : Controller
+    [ApiController]
+    public class PeopleController : ControllerBase
     {
-        private static IEnumerable<Person> SamplePeople = new[]
+        private readonly PeopleContext _context;
+
+        public PeopleController(PeopleContext context)
         {
-            new Person
-            {
-                FirstName = "Harry",
-                LastName = "Potter",
-                Address = "4 Privet Drive, Little Whinging, Surrey",
-                Birthday = new DateTime(1980, 7, 31),
-                Interests = "Potions, Defense Against the Dark Arts, Baking",
-                Photo = Properties.Resources.Harry
-            },
-
-            new Person
-            {
-                FirstName = "Sherlock",
-                LastName = "Holmes",
-                Address = "221B Baker Street",
-                Birthday = new DateTime(1854, 1, 6),
-                Interests = "Being a detective, Reading, Chess",
-                Photo = Properties.Resources.Sherlock
-            },
-
-            new Person
-            {
-                FirstName = "Hermione",
-                LastName = "Grainger",
-                Address = "4 Privet Drive, Little Whinging, Surrey",
-                Birthday = new DateTime(1979, 9, 19),
-                Interests = "Charms, Reading, Cats",
-                Photo = Properties.Resources.Hermione
-            }
-        };
-
-        [HttpGet("[action]")]
-        public IEnumerable<Person> People()
-        {
-            return SamplePeople;
+            _context = context;
         }
 
-        public class Person
+        // GET: api/People
+        [HttpGet]
+        public IEnumerable<Person> GetPeople()
         {
-            public byte[] Photo { get; set; }
-            public string FirstName { get; set; }
-            public string LastName { get; set; }
-            public string Address { get; set; }
-            public string Interests { get; set; }
-            public DateTime Birthday { get; set; }
+            return _context.People;
+        }
 
-            public string Age
+        // GET: api/People/Search
+        [HttpGet("{search}")]
+        public async Task<IActionResult> GetPeople([FromRoute] string search)
+        {
+            if (!ModelState.IsValid)
             {
-                get
-                {
-                    var today = DateTime.Today;
-                    var age = today.Year - Birthday.Year;
-                    // Go back to the year the person was born in case of a leap year
-                    if (Birthday > today.AddYears(-age)) age--;
+                return BadRequest(ModelState);
+            }
 
-                    return age.ToString();
+            var people = await _context.People.Where(x => x.FirstName.Contains(search) || 
+                                                          x.LastName.Contains(search))
+                                                          .ToListAsync();
+            if (people == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(people);
+        }
+
+        // GET: api/People/5
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetPerson([FromRoute] int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var person = await _context.People.FindAsync(id);
+
+            if (person == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(person);
+        }
+
+        // PUT: api/People/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutPerson([FromRoute] int id, [FromBody] Person person)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (id != person.Id)
+            {
+                return BadRequest();
+            }
+
+            _context.Entry(person).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!PersonExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
                 }
             }
+
+            return NoContent();
+        }
+
+        // POST: api/People
+        [HttpPost]
+        public async Task<IActionResult> PostPerson([FromBody] Person person)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            _context.People.Add(person);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetPerson", new { id = person.Id }, person);
+        }
+
+        // DELETE: api/People/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeletePerson([FromRoute] int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var person = await _context.People.FindAsync(id);
+            if (person == null)
+            {
+                return NotFound();
+            }
+
+            _context.People.Remove(person);
+            await _context.SaveChangesAsync();
+
+            return Ok(person);
+        }
+
+        private bool PersonExists(int id)
+        {
+            return _context.People.Any(e => e.Id == id);
         }
     }
 }

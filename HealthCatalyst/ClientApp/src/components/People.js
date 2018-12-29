@@ -1,13 +1,13 @@
 import React, { Component } from 'react';
 
-export class PeopleSearch extends Component {
-    displayName = PeopleSearch.name
+export class People extends Component {
+    displayName = People.name
 
     constructor(props) {
         super(props);
         this.state = { people: [], loading: true };
 
-        fetch('api/People/People')
+        fetch('api/People')
             .then(response => response.json())
             .then(data => {
                 console.log(data)
@@ -31,7 +31,7 @@ export class PeopleSearch extends Component {
                 <tbody>
                     {people.map(person =>
                         <tr key={person.firstName}>
-                            <td><img id="ItemPreview" alt="No Image" src={'data:image/png;base64,' + person.photo}/></td>
+                            <td><img id="ItemPreview" alt="No Image" src={'.' + person.photo}/></td>
                             <td>{person.firstName}</td>
                             <td>{person.lastName}</td>
                             <td>{person.age}</td>
@@ -47,7 +47,7 @@ export class PeopleSearch extends Component {
     render() {
         let contents = this.state.loading
             ? <p><em>Loading...</em></p>
-            : PeopleSearch.renderPeopleTable(this.state.people);
+            : People.renderPeopleTable(this.state.people);
 
         return (
             <div>
