@@ -23,11 +23,6 @@ export class NavMenu extends Component {
                   <Glyphicon glyph='user' /> Search
               </NavItem>
             </LinkContainer>
-            <LinkContainer to={'/People'}>
-              <NavItem>
-                <Glyphicon glyph='user' /> All People
-              </NavItem>
-            </LinkContainer>
           </Nav>
         </Navbar.Collapse>
       </Navbar>

@@ -1,13 +1,27 @@
 import React, { Component } from 'react';
+import { Button, FormControl, FormGroup, ControlLabel, Form } from 'react-bootstrap';
 
 export class Search extends Component {
     displayName = Search.name
 
     constructor(props) {
         super(props);
-        this.state = { people: [], loading: false };
+        this.state = { people: [], loading: false, query: '' };
+    }
 
-        fetch('api/People')
+    searchByName = e => {
+
+        console.log('in render search name')
+
+        // Prevent button click from submitting form
+        e.preventDefault();
+        
+        this.setState({ loading: true });
+
+        const searchInput = this.state.query;
+        const query = 'api/People/' + searchInput;
+
+        fetch(query)
             .then(response => response.json())
             .then(data => {
                 console.log(data)
@@ -15,9 +29,9 @@ export class Search extends Component {
             });
     }
 
-    static renderSearchArea(people) {
-        return (
-            <div className='container'>
+    renderPeopleTable() {
+        if (this.state.people.length !== 0) {
+            return (
                 <table className='table'>
                     <thead>
                         <tr>
@@ -30,9 +44,9 @@ export class Search extends Component {
                         </tr>
                     </thead>
                     <tbody>
-                        {people.map(person =>
+                        {this.state.people.map(person =>
                             <tr key={person.firstName}>
-                                <td><img id="ItemPreview" alt="No Image" src={'.' + person.photo}/></td>
+                                <td><img id="ItemPreview" alt="Profile" src={'.' + person.photo} /></td>
                                 <td>{person.firstName}</td>
                                 <td>{person.lastName}</td>
                                 <td>{person.age}</td>
@@ -42,16 +56,58 @@ export class Search extends Component {
                         )}
                     </tbody>
                 </table>
+            )
+        }
+        else {
+            return ( <span></span> )
+        }
+    }
+
+    getValidationState() {
+        if (typeof this.state.query === 'string')
+            return 'success';
+        return 'error';
+    }
+
+    handleChange = e => {
+        this.setState({ query: e.target.value });
+    }
+
+    submitHandler = e => {
+        e.preventDefault();
+    }
+
+    renderSearchArea() {
+        return (
+            <div className='container'>
+                <section className="section">
+                    <Form inline className="form" id="searchForm" onSubmit={this.submitHandler}>
+                        <FormGroup
+                            controlId="formSearch"
+                            validationState={this.getValidationState}
+                        />
+                        <FormControl
+                            type="text"
+                            value={this.state.query}
+                            placeholder="Search for person"
+                            className="input"
+                            id="searchInput"
+                            onChange={this.handleChange}
+                        />
+                        <Button bsStyle="primary" className="button is-info" onClick={this.searchByName}>
+                            Search
+                        </Button>
+                    </Form>
+                </section>
             </div>
         );
     }
 
     render() {
-        let contents = Search.renderSearchArea(this.state.people);
-
         return (
             <div>
-                {contents}
+                {this.renderSearchArea()}
+                {this.renderPeopleTable()}
             </div>
         );
     }

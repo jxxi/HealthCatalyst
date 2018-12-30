@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HealthCatalyst.Model;
-using Microsoft.Extensions.Logging;
 
 namespace HealthCatalyst.Controllers
 {
@@ -28,17 +26,18 @@ namespace HealthCatalyst.Controllers
             return _context.People;
         }
 
-        // GET: api/People/Search
-        [HttpGet("{search}")]
-        public async Task<IActionResult> GetPeople([FromRoute] string search)
+        // GET: api/People/searchInput
+        [HttpGet("{searchInput}", Name = "Search")]
+        public async Task<IActionResult> GetPeopleByName([FromRoute] string searchInput)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var people = await _context.People.Where(x => x.FirstName.Contains(search) || 
-                                                          x.LastName.Contains(search))
+            var lowerSearch = searchInput.ToLower();
+            var people = await _context.People.Where(x => x.FirstName.Contains(lowerSearch, StringComparison.OrdinalIgnoreCase) || 
+                                                          x.LastName.Contains(lowerSearch, StringComparison.OrdinalIgnoreCase))
                                                           .ToListAsync();
             if (people == null)
             {
@@ -46,25 +45,6 @@ namespace HealthCatalyst.Controllers
             }
 
             return Ok(people);
-        }
-
-        // GET: api/People/5
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetPerson([FromRoute] int id)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var person = await _context.People.FindAsync(id);
-
-            if (person == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(person);
         }
 
         // PUT: api/People/5
