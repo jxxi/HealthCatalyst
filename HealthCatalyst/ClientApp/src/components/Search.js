@@ -1,17 +1,19 @@
 import React, { Component } from 'react';
-import { Button, FormControl, FormGroup, ControlLabel, Form } from 'react-bootstrap';
+import { Button, FormControl, Form } from 'react-bootstrap';
+import './search.css';
 
 export class Search extends Component {
     displayName = Search.name
 
     constructor(props) {
         super(props);
-        this.state = { people: [], loading: false, query: '' };
+        this.state = { people: [], loading: false, query: '', errorMessage: ''};
     }
 
     searchByName = e => {
 
-        console.log('in render search name')
+        if (this.validateState() === 'error')
+            return;
 
         // Prevent button click from submitting form
         e.preventDefault();
@@ -24,13 +26,21 @@ export class Search extends Component {
         fetch(query)
             .then(response => response.json())
             .then(data => {
-                console.log(data)
                 this.setState({ people: data, loading: false });
             });
     }
 
     renderPeopleTable() {
-        if (this.state.people.length !== 0) {
+        if (this.state.loading) {
+            return (
+                <section className='loader-section'>
+                    <div className='flex-item'>
+                        <div className='loader'></div>
+                    </div>              
+                </section>
+            )
+        }
+        else if (this.state.people.length !== 0) {
             return (
                 <table className='table'>
                     <thead>
@@ -63,14 +73,28 @@ export class Search extends Component {
         }
     }
 
-    getValidationState() {
-        if (typeof this.state.query === 'string')
+    searchIsValid() {
+        if (this.state.query !== '') {
+            if (!this.state.query.match(/^[a-zA-Z]+$/))
+                return false;
+        }
+
+        return true;
+    }
+
+    validateState() {
+        if (this.searchIsValid()) {
+            this.setState({ errorMessage: '' });
             return 'success';
+        }
+
+        this.setState({ errorMessage: 'No special characters in search' });
+
         return 'error';
     }
 
     handleChange = e => {
-        this.setState({ query: e.target.value });
+        this.setState({ query: e.target.value }, this.validateState);
     }
 
     submitHandler = e => {
@@ -80,24 +104,24 @@ export class Search extends Component {
     renderSearchArea() {
         return (
             <div className='container'>
-                <section className="section">
-                    <Form inline className="form" id="searchForm" onSubmit={this.submitHandler}>
-                        <FormGroup
-                            controlId="formSearch"
-                            validationState={this.getValidationState}
-                        />
-                        <FormControl
-                            type="text"
-                            value={this.state.query}
-                            placeholder="Search for person"
-                            className="input"
-                            id="searchInput"
-                            onChange={this.handleChange}
-                        />
-                        <Button bsStyle="primary" className="button is-info" onClick={this.searchByName}>
-                            Search
-                        </Button>
-                    </Form>
+                <section>
+                    <div className='col-md-4'></div>
+                    <div className='col-md-4'>
+                        <Form onSubmit={this.submitHandler} inline>
+                            <FormControl
+                                type="text"
+                                value={this.state.query}
+                                placeholder="Search for person"
+                                onChange={this.handleChange}
+                            />                     
+                            <FormControl.Feedback />                   
+                            <Button bsStyle="primary" className="button is-info" onClick={this.searchByName} disabled={!!this.state.errorMessage}>
+                                Search
+                            </Button>
+                        </Form>
+                        <div className={this.state.errorMessage ? "error text-danger" : ""}> {this.state.errorMessage}</div>
+                    </div>
+                    <div className='col-md-4'></div>
                 </section>
             </div>
         );
@@ -107,6 +131,7 @@ export class Search extends Component {
         return (
             <div>
                 {this.renderSearchArea()}
+                <hr />
                 {this.renderPeopleTable()}
             </div>
         );
