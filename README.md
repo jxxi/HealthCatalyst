@@ -12,3 +12,8 @@
 * A Web Application using WebAPI and a front-end JavaScript framework (e.g., Angular, AngularJS, React, Aurelia, etc.) 
 * Use an ORM framework to talk to the database
 * Unit Tests for appropriate parts of the application
+
+## To Run
+
+* Clone project
+* Select HealthCatalyst Project and run
